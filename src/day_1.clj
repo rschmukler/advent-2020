@@ -2,31 +2,22 @@
   "Day 1, here we come"
   (:require [clojure.java.io :as io]))
 
-(defn combinations
-  "Select all unique combinations of `n` items from `coll`."
-  [n coll]
-  (loop [iterations 0
-         combos     #{#{}}]
-    (if (== iterations n)
-      combos
-      (recur (inc iterations)
-             (set (for [x     coll
-                        combo combos
-                        :when (not (contains? combo x))]
-                    (conj combo x)))))))
-
 (defn find-n-with-sum
   "Finds `n` numbers that sum up to `sum` from `coll`"
   [n sum coll]
-  (->> (combinations n coll)
-       (filter #(= sum (apply + %)))
-       (first)))
+  (let [find-match (if (= 2 n)
+                     #(when-some [match (coll (- sum %))]
+                        #{% match})
+                     #(when-some [subset (find-n-with-sum (dec n) (- sum %) (disj coll %))]
+                        (conj subset %)))]
+    (some find-match coll)))
 
 (def problem-input
   (->> (io/resource "day1_input.txt")
        (io/reader)
        (line-seq)
-       (map read-string)))
+       (map read-string)
+       set))
 
 (defn solve-part-1
   "Solve day-1.part-1"
@@ -43,5 +34,7 @@
        (apply *)))
 
 (comment
-  (solve-part-1)
-  (solve-part-2))
+  (time
+    (solve-part-1))
+  (time
+    (solve-part-2)))
