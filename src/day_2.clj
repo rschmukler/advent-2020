@@ -20,7 +20,7 @@
   in part one."
   [{:keys [min max letter password]}]
   (let [freq (get (frequencies password) letter 0)]
-    (and (<= min freq max))))
+    (<= min freq max)))
 
 
 (defn valid-part-two-policy?
