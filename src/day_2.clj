@@ -1,15 +1,15 @@
 (ns day-2
   "Day 2 AOC 2020"
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [utils :refer [xor]]))
 
 (defn line->policy-check
   "Convert a line of text into a password policy"
   [line]
   (let [[min-max-txt letter-txt passwd] (str/split line #" ")
-
-        [min max] (->> (str/split min-max-txt #"-")
-                       (map read-string))]
+        [min max]                       (->> (str/split min-max-txt #"-")
+                                             (map read-string))]
     {:min      min
      :max      max
      :letter   (first letter-txt)
@@ -30,8 +30,7 @@
   (let [ix->letter  (vec password)
         min-letter? (= letter (ix->letter (dec min)))
         max-letter? (= letter (ix->letter (dec max)))]
-    (or (and min-letter? (not max-letter?))
-        (and max-letter? (not min-letter?)))))
+    (xor min-letter? max-letter?)))
 
 (def input
   "Our input, mapped to policy checks"
