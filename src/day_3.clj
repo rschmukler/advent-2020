@@ -2,49 +2,34 @@
   "Day 3, ahoy!"
   (:require [clojure.java.io :as io]))
 
-(defn lines->map
-  "Convert a line to a map entry"
-  [lines]
-  (->> (for [[line-ix line] (map-indexed vector lines)]
-         (for [[char-ix char] (map-indexed vector line)]
-           [[char-ix line-ix] (case char
-                                \. false
-                                \# true)]))
-       (apply concat)
-       (into {})))
-
 (def input
   "Day 3s input"
   (->> (io/resource "day3_input.txt")
        (io/reader)
-       (line-seq)
-       (lines->map)))
+       (line-seq)))
 
 (defn trees-on-slope
-  "Find the provided trees on the given slope"
-  [input-map [x-delta y-delta]]
-  (let [max-x (->> input-map
-                   (keys)
-                   (map first)
-                   (apply max)
-                   inc)]
-    (loop [[x y] [0 0]
-           count 0]
-      (if-some [tree? (get input-map [(mod x max-x) y])]
-        (recur [(+ x x-delta) (+ y y-delta)] (if tree? (inc count) count))
-        count))))
+  "Return a sequence of [x y] tuples of trees on the given slope."
+  [lines {:keys [x-delta y-delta]}]
+  (let [relevant-y? #(zero? (mod % y-delta))]
+    (for [[y line] (map-indexed vector lines)
+          :when    (relevant-y? y)
+          :let     [x    (* y x-delta)
+                    char (nth (cycle line) x)]
+          :when    (= \# char)]
+      [x y])))
 
 (defn find-slope-product
   "Find the product of all the trees on the provided slope candidates"
-  [input-map candidates]
+  [lines candidates]
   (->> candidates
-       (map (partial trees-on-slope input-map))
+       (map #(count (trees-on-slope lines %)))
        (apply *)))
 
 (comment
-  (trees-on-slope input [3 1])
-  (find-slope-product input [[1 1]
-                             [3 1]
-                             [5 1]
-                             [7 1]
-                             [1 2]]))
+  (count (trees-on-slope input {:x-delta 3 :y-delta 1}))
+  (find-slope-product input [{:x-delta 1 :y-delta 1}
+                             {:x-delta 3 :y-delta 1}
+                             {:x-delta 5 :y-delta 1}
+                             {:x-delta 7 :y-delta 1}
+                             {:x-delta 1 :y-delta 2}]))
