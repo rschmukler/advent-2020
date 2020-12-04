@@ -24,20 +24,20 @@
                        (filter sut/valid-passport?))))))
 
 (deftest field-validation-tests
-  (is (sut/valid-birth-year? "2002"))
-  (is (not (sut/valid-birth-year? "2003")))
+  (is (sut/valid? "byr" "2002"))
+  (is (not (sut/valid? "byr" "2003")))
 
-  (is (sut/valid-height? "60in"))
-  (is (not (sut/valid-height? "190in")))
+  (is (sut/valid? "hgt" "60in"))
+  (is (not (sut/valid? "hgt" "190in")))
 
-  (is (sut/valid-hair-color? "#123abc"))
-  (is (not (sut/valid-hair-color? "#123abz")))
+  (is (sut/valid? "hcl" "#123abc"))
+  (is (not (sut/valid? "hcl" "#123abz")))
 
-  (is (sut/valid-eye-color? "brn"))
-  (is (not (sut/valid-eye-color? "wat")))
+  (is (sut/valid? "ecl" "brn"))
+  (is (not (sut/valid? "ecl" "wat")))
 
-  (is (sut/valid-pid? "000000001"))
-  (is (not (sut/valid-pid? "0123456789"))))
+  (is (sut/valid? "pid" "000000001"))
+  (is (not (sut/valid? "pid" "0123456789"))))
 
 (deftest part-two-invalid-test
   (doseq [passport invalid-passports]

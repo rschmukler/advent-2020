@@ -30,9 +30,8 @@
   "Return a set of missing fields for the provided passport"
   [passport]
   (let [expected #{"byr" "iyr" "eyr" "hgt" "hcl" "ecl" "pid" "cid"}
-        found    (set (keys passport))
-        missing  (set/difference expected found)]
-    missing))
+        found    (set (keys passport))]
+    (set/difference expected found)))
 
 (defn valid-passport?
   "Return whether the provided passport is valid"
@@ -42,24 +41,29 @@
     #{}      true
     false))
 
-(defn valid-birth-year?
-  "Return whether the provided birth year is valid"
-  [byr]
-  (<= 1920 (read-string byr) 2002))
+(defmulti valid?
+  "Return whether the provided field is valid"
+  (fn [field _]
+    field))
 
-(defn valid-expiration-year?
-  "Return whether the provided expiration year is valid"
-  [eyr]
-  (<= 2020 (read-string eyr) 2030))
+(defmethod valid? :default
+  [_ _]
+  true)
 
-(defn valid-issue-year?
-  "Return whether the provided issue year is valid"
-  [iyr]
-  (<= 2010 (read-string iyr) 2020))
+(defmethod valid? "byr"
+  [_ value]
+  (<= 1920 (read-string value) 2002))
 
-(defn valid-height?
-  "Return whether the provided height is valid"
-  [height]
+(defmethod valid? "eyr"
+  [_ value]
+  (<= 2020 (read-string value) 2030))
+
+(defmethod valid? "iyr"
+  [_ value]
+  (<= 2010 (read-string value) 2020))
+
+(defmethod valid? "hgt"
+  [_ height]
   (when-some [[_ num unit] (re-find #"^(\d+)(cm|in)$" height)]
     (let [num (read-string num)]
       (case unit
@@ -67,34 +71,25 @@
         "in" (<= 59 num 76)
         false))))
 
-(defn valid-hair-color?
-  "Return whether the provided hair color is valid"
-  [hair-color]
+(defmethod valid? "hcl"
+  [_ hair-color]
   (some? (re-find #"^#([a-f0-9]{6})$" hair-color)))
 
-(defn valid-eye-color?
-  "Return whether the provided eye color is valid"
-  [eye-color]
+(defmethod valid? "ecl"
+  [_ eye-color]
   (contains? #{"amb" "blu" "brn" "gry" "grn" "hzl" "oth"} eye-color))
 
-(defn valid-pid?
-  "Return whether the provided passport id is valid"
-  [pid]
+(defmethod valid? "pid"
+  [_ pid]
   (some? (re-find #"^\d{9}$" pid)))
 
 (defn valid-passport-part-two?
   "Return whether the provided passport is valid per the advanced rules in part two"
   [passport]
-  (when (valid-passport? passport)
-    (->> (for [[field valid?] {"byr" valid-birth-year?
-                               "eyr" valid-expiration-year?
-                               "iyr" valid-issue-year?
-                               "hgt" valid-height?
-                               "hcl" valid-hair-color?
-                               "ecl" valid-eye-color?
-                               "pid" valid-pid?}]
-           (valid? (get passport field)))
-         (every? true?))))
+  (reduce-kv
+    #(and %1 (valid? %2 %3))
+    (valid-passport? passport)
+    passport))
 
 
 (comment
