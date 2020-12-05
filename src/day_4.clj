@@ -3,8 +3,7 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [malli.transform :as mt]
-            [malli.core :as m]
-            [clojure.core.match :refer [match]]))
+            [malli.core :as m]))
 
 (defn- parse-passport
   [group]
@@ -22,7 +21,7 @@
        (keep parse-passport)))
 
 (def input
-  "Day 3s input"
+  "Day 4s input"
   (->> (io/resource "day4_input.txt")
        (io/reader)
        (line-seq)
