@@ -17,16 +17,17 @@
          [(str adj " " color) (read-string qty)]))]))
 
 
-(defn transitively-contains-bag?
+(def transitively-contains-bag?
   "Returns whether the `src-bag` or any of its child bags contain `bag` using
   the provided `rules` map."
-  [rules src-bag bag]
-  (let [direct-contents (get rules src-bag)]
-    (or
-      (contains? direct-contents bag)
-      (some
-        #(transitively-contains-bag? rules % bag)
-        (keys direct-contents)))))
+  (memoize
+    (fn [rules src-bag bag]
+      (let [direct-contents (get rules src-bag)]
+        (or
+          (contains? direct-contents bag)
+          (some
+            #(transitively-contains-bag? rules % bag)
+            (keys direct-contents)))))))
 
 (def input
   "Our input coerced into a rules map"
@@ -36,13 +37,15 @@
        (map line->contents)
        (into {})))
 
-(defn child-bags
+(def child-bags
   "Return a sequence of all child bags for the provided src-bag"
-  [rules src-bag]
-  (flatten
-    (for [[child child-count] (get rules src-bag)]
-      (repeat child-count
-              (cons child (child-bags rules child))))))
+  (memoize
+    (fn
+      [rules src-bag]
+      (flatten
+        (for [[child child-count] (get rules src-bag)]
+          (repeat child-count
+                  (cons child (child-bags rules child))))))))
 
 (defn bags-containing-child
   "Return a sequence of bags that contains the provided bag"
@@ -52,6 +55,8 @@
 
 (comment
   ;; Solve part one
-  (count (bags-containing-child input "shiny gold"))
+  (time
+    (count (bags-containing-child input "shiny gold")))
   ;; Solve part two
-  (count (child-bags input "shiny gold")))
+  (time
+    (count (child-bags input "shiny gold"))))
