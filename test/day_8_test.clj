@@ -12,4 +12,5 @@
   (is (= [5 false] (sut/run-program input))))
 
 (deftest fix-non-terminating-program-test
-  (is (= [8 true] (sut/fix-non-terminating-program input))))
+  (is (= 8 (sut/fix-non-terminating-program input {:nop :jmp
+                                                   :jmp :nop}))))

@@ -25,34 +25,24 @@
   (loop [seen #{}
          ptr  0
          acc  0]
-    (let [instruction (instructions ptr)
-          new-seen    (conj seen ptr)
-          new-acc     (match instruction
-                        [:acc x] (+ acc x)
-                        _        acc)
-          new-ptr     (match instruction
-                        [:jmp x] (max (+ ptr x) 0)
-                        _        (inc ptr))]
-      (cond
-        (contains? seen new-ptr)           [acc false]
-        (= ptr (dec (count instructions))) [new-acc true]
-        :else                              (recur new-seen new-ptr new-acc)))))
+    (cond
+      (contains? seen ptr)         [acc false]
+      (= ptr (count instructions)) [acc true]
+      :else
+      (match (instructions ptr)
+        [:nop _] (recur (conj seen ptr) (inc ptr) acc)
+        [:jmp x] (recur (conj seen ptr) (+ ptr x) acc)
+        [:acc x] (recur (conj seen ptr) (inc ptr) (+ acc x))))))
 
 (defn fix-non-terminating-program
   "Attempts to fix a non terminating program by swapping instructions until
   it finds a terminating program. Returns the count, or nil if it couldn't be solved."
-  [instructions]
-  (let [swap-instructions (for [[ix [op x]] (map-indexed vector instructions)
-                                :when       (#{:nop :jmp} op)]
-                            [ix [(match op
-                                   :jmp :nop
-                                   :nop :jmp) x]])]
-    (loop [[[ix new-instruction] :as attempts] (reverse swap-instructions)]
-      (let [new-program          (vec
-                                   (concat
-                                     (subvec instructions 0 ix)
-                                     [new-instruction]
-                                     (subvec instructions (inc ix))))
+  [instructions remap]
+  (let [swap-ixs (for [[ix [op _]] (map-indexed vector instructions)
+                       :when       (contains? remap op)]
+                   ix)]
+    (loop [[ix :as attempts] (reverse swap-ixs)]
+      (let [new-program          (update-in instructions [ix 0] remap)
             [result terminated?] (run-program new-program)]
         (cond
           terminated?    result
@@ -61,4 +51,5 @@
 
 (comment
   (first (run-program input))
-  (fix-non-terminating-program input))
+  (fix-non-terminating-program input {:nop :jmp
+                                      :jmp :nop}))
