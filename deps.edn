@@ -1,4 +1,5 @@
 {:paths ["src" "test" "resources"]
  :deps
  {org.clojure/core.match {:mvn/version "1.0.0"}
+  data.deque/data.deque  {:mvn/version "0.1.0"}
   metosin/malli          {:mvn/version "0.2.1"}}}

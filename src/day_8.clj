@@ -11,7 +11,7 @@
     [(keyword instruction) (read-string x)]))
 
 (def input
-  "Our input coerced into a rules map"
+  "Instructions"
   (->> (io/resource "day8_input.txt")
        (io/reader)
        (line-seq)
