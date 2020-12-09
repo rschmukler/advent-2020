@@ -11,30 +11,35 @@
        (mapv read-string)))
 
 (defn valid?
-  "Return whether or not the provided number is valid using the supplied preamble"
-  [preamble number]
-  (some
-    #(and
-       (not= % (/ number 2))
-       (contains? preamble %)
-       (contains? preamble (- number %)))
-    preamble))
+  "Return whether or not the provided number is valid using the supplied preamble.
+
+  Takes a single argument that is a sequence of preamble plus the input
+  (ie. what partition gives us)"
+  [preamble+number]
+  (let [preamble (set (butlast preamble+number))
+        number   (last preamble+number)]
+    (some
+      #(and
+         (not= % (/ number 2))
+         (contains? preamble %)
+         (contains? preamble (- number %)))
+      preamble)))
 
 (defn solve-part-one
   "Solve part one using the provided input and preamble length"
   [input preamble-length]
   (->> input
        (partition (inc preamble-length) 1)
-       (remove
-         (fn [partition]
-           (valid? (set (butlast partition)) (last partition))))
-       (map last)
-       (first)))
+       (some #(when-not (valid? %)
+                (last %)))))
 
 (defn find-summing-to
   "Finds a contiguious sequence of numbers within input that will add up to sum"
   [sum input]
   (let [input (vec input)
+        ;; we could go faster by keeping a running count, but
+        ;; this feels so much nicer. I benchmarked the difference and its 45ms without and 14ms with.
+        ;; Fast enough for now.
         sum-q #(reduce + 0 %)]
     (loop [ptr   0
            queue (dq/deque)]
@@ -46,6 +51,7 @@
           (< sum existing-sum)  (recur ptr (dq/remove-first queue)))))))
 
 (defn solve-part-two
+  "Solve part two using the provided input and preamble length"
   [input preamble-length]
   (let [answer-one (solve-part-one input preamble-length)]
     (when-some [sum-seq (find-summing-to answer-one input)]
