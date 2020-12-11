@@ -45,12 +45,14 @@
 
 
 (deftest simulate-round-test
-  (is (= expected-round-two (sut/simulate-round input)))
-  (is (= expected-round-three (sut/simulate-round expected-round-two)))
-  (is (= expected-round-four (sut/simulate-round expected-round-three))))
+  (doseq [[input expected] (partition 2 1 [input
+                                           expected-round-two
+                                           expected-round-three
+                                           expected-round-four])]
+    (is (= expected (sut/simulate-round input sut/transition-coordinate-part-one)))))
 
 (deftest solve-part-one-test
-  (is (= 37 (sut/solve-part-one input))))
+  (is (= 37 (sut/solve-using input sut/transition-coordinate-part-one))))
 
 (deftest find-closest-seat-test
   (is (= [0 7] (sut/find-closest-seat empty-seat-map 0 0 #{:right})))

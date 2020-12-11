@@ -64,11 +64,10 @@
   [a transition-fn]
   (let [max-rows   (count a)
         max-aisles (count (first a))]
-    (vec
-      (for [row (range max-rows)]
-        (vec
-          (for [aisle (range max-aisles)]
-            (transition-fn a row aisle)))))))
+    (->> (range max-rows)
+         (pmap #(->> (range max-aisles)
+                     (mapv (partial transition-fn a %))))
+         (vec))))
 
 (defn solve-using
   "Solve the puzzle using the provided transition fn"
@@ -128,5 +127,7 @@
 
 
 (comment
-  (solve-using input transition-coordinate-part-one)
-  (solve-using input transition-coordinate-part-two))
+  (time
+    (solve-using input transition-coordinate-part-one))
+  (time
+    (solve-using input transition-coordinate-part-two)))
