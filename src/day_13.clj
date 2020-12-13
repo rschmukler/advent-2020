@@ -41,16 +41,23 @@
   [bus t]
   (zero? (rem (+ t (:ix bus)) (:id bus))))
 
+(defn update-time-generator-for-bus
+  "Update the provided time generator to a timestamp that will work provide a valid departure
+  for the bus, and increase the iterate step such that all succssive numbers will produce valid
+  depatures for the bus (and all previous buses)."
+  [time-gen bus]
+  (let [step (->> time-gen (take 2) reverse (apply -))]
+    (->> time-gen
+         (utils/find-first (partial valid-departure? bus))
+         (iterate #(+ % (utils/least-common-multiple step (:id bus)))))))
+
 (defn solve-part-two
-  [schedule]
-  (loop [[bus & buses] (:buses schedule)
-         step          1
-         t             0]
-    (if-not bus
-      t
-      (recur
-        buses
-        (utils/least-common-multiple step (:id bus))
-        (->> t
-             (iterate #(+ step %))
-             (some #(and (valid-departure? bus %) %)))))))
+  [{:keys [buses]}]
+  (->> buses
+       (reduce update-time-generator-for-bus (range))
+       first))
+
+(comment
+  (solve-part-one input)
+  (solve-part-two input)
+  )

@@ -27,3 +27,8 @@
   (let [lcm (fn lcm [a b]
               (/ (* a b) (gcd a b)))]
     (reduce lcm (lcm a b) args)))
+
+(defn find-first
+  "Return the first item in collection that returns truthy for `pred`"
+  [pred coll]
+  (some #(and (pred %) %) coll))
