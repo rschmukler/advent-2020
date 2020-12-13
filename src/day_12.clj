@@ -17,7 +17,7 @@
    (read-string (apply str (rest line)))])
 
 (def input
-  "Input for day 11"
+  "Input for day 12"
   (->> (io/resource "day12_input.txt")
        (io/reader)
        (line-seq)
