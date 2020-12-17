@@ -12,10 +12,10 @@
 (deftest line->instruction-test
   (is (= [:forward 10] (first input))))
 
-(deftest apply-instruction-test
+(deftest apply-instruction-part-one-test
   (is (= {:north 0 :east 10 :direction :east}
-         (sut/apply-instruction {:north 0 :east 0 :direction :east}
-                                [:forward 10]))))
+         (sut/apply-instruction-part-one {:north 0 :east 0 :direction :east}
+                                         [:forward 10]))))
 
 (deftest solve-part-one-test
   (is (= 25 (sut/solve-using sut/apply-instruction-part-one input))))
