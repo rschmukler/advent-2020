@@ -27,7 +27,7 @@
 
 (deftest line->rule-test
   (testing "literal rule"
-    (is (= [3 [:literal "b"]]
+    (is (= [3 [:literal \b]]
            (sut/line->rule "3: \"b\""))))
 
   (testing "or rule"

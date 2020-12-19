@@ -14,7 +14,7 @@
         or-parts      (str/split rule "|")]
     [(read-string id)
      (cond
-       literal                [:literal literal]
+       literal                [:literal (first literal)]
        (> (count or-parts) 1) (->> or-parts
                                    (map str->seq-expr)
                                    (into [:or]))
@@ -47,32 +47,24 @@
   "Our messages"
   (:messages processed-input))
 
-(defn substrings
-  "Return all possible substrings of `s`"
-  [s]
-  (for [x (range 1 (inc (count s)))]
-    (subs s 0 x)))
+(defn match-rule?
+  "Return whether the provided string `s` matches the `stack` of rule-ids using the provided
+  `rules`."
+  [rules stack s]
+  (let [[rule-id & stack] stack]
+    (match (get rules rule-id)
+      nil                           (empty? s)
+      [:literal a]                  (and (= a (first s))
+                                         (recur rules stack (rest s)))
+      [:seq & xs]                   (recur rules (concat xs stack) s)
+      [:or [:seq & as] [:seq & bs]] (or (match-rule? rules (concat as stack) s)
+                                        (match-rule? rules (concat bs stack) s)))))
 
-(def match-rule
-  "Returns `s` iff it is a match for `rule`"
-  (memoize
-    (fn [rules rule s]
-      (match rule
-        [:literal x]    (when (= x s) x)
-        [:seq]          (when (= s "") "")
-        [:seq id & ids] (->> (substrings s)
-                             (some
-                               (fn [sub]
-                                 (when (and (match-rule rules (get rules id) sub)
-                                            (match-rule rules (into [:seq] ids) (subs s (count sub))))
-                                   s))))
-        [:or a b] (or (match-rule rules a s)
-                      (match-rule rules b s))))))
 (defn count-matches
   "Return the number of matching messages using the provided rules"
   [rules messages]
   (->> messages
-       (filter #(match-rule rules (get rules 0) %))
+       (filter #(match-rule? rules [0] %))
        count))
 
 
@@ -82,8 +74,9 @@
     (count-matches rules messages))
 
   ;; Solve Part Two
-  (let [new-rules (->> ["8: 42 | 42 8"
-                        "11: 42 31 | 42 11 31"]
-                       (map line->rule)
-                       (into rules))]
-    (count-matches new-rules messages)))
+  (time
+    (let [new-rules (->> ["8: 42 | 42 8"
+                          "11: 42 31 | 42 11 31"]
+                         (map line->rule)
+                         (into rules))]
+      (count-matches new-rules messages))))
