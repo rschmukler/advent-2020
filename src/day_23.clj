@@ -5,66 +5,61 @@
   [4 8 7 9 1 2 3 6 5])
 
 
-(defn chain->value-seq
-  "Convert a chain node into a sequence of values"
-  [chain]
-  (letfn [(->seq [chain seen]
-            (when-not (seen chain)
-              (lazy-seq
-                (cons (:value @chain) (->seq (:next @chain) (conj seen chain))))))]
-    (->seq chain #{})))
-
-
 (defn ->game
   "Initialize a game state with the provided cups"
   [cups]
-  (let [vs    (->> cups
-                   (mapv #(volatile! {:value %})))
-        vs-ix (->> vs
-                   (map (juxt (comp :value deref) identity))
-                   (into {}))]
-    (doseq [[a next] (partition 2 1 vs)]
-      (vswap! a assoc :next next))
+  {:cup       (first cups)
+   :cup->next (let [cup->next (->> cups
+                                   (partition 2 1)
+                                   (map vec)
+                                   (into {}))]
+                (assoc cup->next (last cups) (first cups)))
+   :max-cup   (apply max cups)})
 
-    (vswap! (last vs) assoc :next (first vs))
-    {:ptr     (vs-ix (first cups))
-     :index   vs-ix
-     :max-cup (apply max cups)}))
+(defn cup-seq
+  "Return a sequence of cups from the game state"
+  ([game] (cup-seq true game))
+  ([infinite? game]
+   (letfn [(->seq [{:keys [cup->next cup]} seen]
+             (when-not (and cup (seen cup))
+               (lazy-seq
+                 (cons cup (->seq (assoc game :cup (cup->next cup)) (if-not infinite?
+                                                                      (conj seen cup)
+                                                                      seen))))))]
+     (->seq game #{}))))
 
-(defn turn!
-  [{:keys [ptr max-cup index] :as game}]
-  (let [cup             (:value @ptr)
-        picked-up-cups  (->> (iterate (comp :next deref) ptr)
+(defn turn
+  [{:keys [cup max-cup cup->next] :as game}]
+  (let [picked-up-cups  (->> (cup-seq game)
                              (drop 1)
                              (take 3))
-        other-cups      (nth (iterate (comp :next deref) ptr) 4)
-        picked-up-set   (set (map (comp :value deref) picked-up-cups))
+        next-cup        (nth (cup-seq game) 4)
+        picked-up-set   (set picked-up-cups)
         destination-cup (loop [tgt (dec cup)]
                           (cond
                             (zero? tgt)                         (recur max-cup)
                             (not (contains? picked-up-set tgt)) tgt
                             :else                               (recur (dec tgt))))
-
-        dest-ptr (get index destination-cup)
-        next-cup (:next @dest-ptr)]
-    (vswap! ptr assoc :next other-cups)
-    (vswap! dest-ptr assoc :next (first picked-up-cups))
-    (vswap! (last picked-up-cups) assoc :next next-cup)
-    (assoc game :ptr (:next @ptr))))
+        next-dst-cup    (cup->next destination-cup)]
+    (-> game
+        (assoc :cup next-cup)
+        (assoc-in [:cup->next cup] next-cup)
+        (assoc-in [:cup->next destination-cup] (first picked-up-cups))
+        (assoc-in [:cup->next (last picked-up-cups)] next-dst-cup))))
 
 (defn play-n-turns
   "Return the game state after playing `n` turns using the initial `cups`"
   [n cups]
   (->> (->game cups)
-       (iterate turn!)
+       (iterate turn)
        (drop n)
        (first)))
 
 (defn cups-after-one
   "Return `n` cups after one with the provided end state"
   [n game-state]
-  (->> (get (:index game-state) 1)
-       (chain->value-seq)
+  (->> (assoc game-state :cup 1)
+       (cup-seq)
        (drop 1)
        (take n)))
 
@@ -87,4 +82,4 @@
           (apply *)))))
 
 (comment
-  (solve-part-two))
+  (solve-part-two input))

@@ -13,10 +13,10 @@
           [6 7 4 1 5 8 3 9 2]
           [5 7 4 1 8 3 9 2 6]
           [8 3 7 4 1 9 2 6 5]]
-         (->> (iterate sut/turn! (sut/->game [3 8 9 1 2 5 4 6 7]))
+         (->> (iterate sut/turn (sut/->game [3 8 9 1 2 5 4 6 7]))
               (drop 1)
               (take 10)
-              (mapv (comp vec sut/chain->value-seq :ptr))))))
+              (mapv (comp vec (partial sut/cup-seq false)))))))
 
 
 (deftest solve-part-one-test
@@ -25,4 +25,4 @@
 
 
 (deftest solve-part-two-test
-  (is (= 389125467 (sut/solve-part-two [3 8 9 1 2 5 4 6 7]))))
+  (is (= 149245887792 (sut/solve-part-two [3 8 9 1 2 5 4 6 7]))))
